@@ -1,6 +1,5 @@
 import sys
 import sqlite3
-from idlelib.search import SearchDialog
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon
@@ -52,20 +51,18 @@ class MainWindow(QMainWindow):
         # Detect a cell click
         self.table.cellClicked.connect(self.cell_clicked)
 
-    def cell_clicked(self):
-        edit_button = QPushButton("Edit Record")
-        edit_button.clicked.connect(self.edit)
+    def cell_clicked(self, row, column):
+        self.edit_button = QPushButton("Edit Record")
+        self.edit_button.clicked.connect(self.edit)
 
-        delete_button = QPushButton("Delete Record")
-        delete_button.clicked.connect(self.delete)
+        self.delete_button = QPushButton("Delete Record")
+        self.delete_button.clicked.connect(self.delete)
 
-        children = self.findChildren(QPushButton)
-        if children:
-            for child in children:
-                self.statusbar.removeWidget(child)
+        for child in self.statusbar.findChildren(QPushButton):
+            self.statusbar.removeWidget(child)
 
-        self.statusbar.addWidget(edit_button)
-        self.statusbar.addWidget(delete_button)
+        self.statusbar.addWidget(self.edit_button)
+        self.statusbar.addWidget(self.delete_button)
 
 
     def load_data(self):
@@ -108,10 +105,11 @@ class EditDialog(QDialog):
         student_name = main_window.table.item(index, 1).text()
 
         # Get id from selected row
+        self.student_id = main_window.table.item(index, 0).text()
         # Add student name widget
-        self.stundent_name = QLineEdit(student_name)
-        self.stundent_name.setPlaceholderText("Name")
-        layout.addWidget(self.stundent_name)
+        self.student_name = QLineEdit(student_name)
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
 
         # Add combo box of courses
         course_name = main_window.table.item(index, 2).text()
@@ -138,8 +136,16 @@ class EditDialog(QDialog):
         connection = sqlite3.connect("database.db")
         cursor = connection.cursor()
         cursor.execute("UPDATE students SET name = ?, course = ?, mobile = ? WHERE id = ?",
-                       (self.student_name.txt(), self.course_name.text(), self.mobile.text(),
-                        ))
+                       (self.student_name.text(),
+                        self.course_name.itemText(self.course_name.currentIndex()),
+                        self.mobile.text(),
+                        self.student_id))
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        # Refresh the table
+        main_window.load_data()
 
 
 class DeleteDialog(QDialog):
@@ -156,9 +162,9 @@ class InsertDialog(QDialog):
         layout = QVBoxLayout()
 
         # Add student name widget
-        self.stundent_name = QLineEdit()
-        self.stundent_name.setPlaceholderText("Name")
-        layout.addWidget(self.stundent_name)
+        self.student_name = QLineEdit()
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
 
         # Add combo box of courses
         self.course_name = QComboBox()
@@ -179,7 +185,7 @@ class InsertDialog(QDialog):
         self.setLayout(layout)
 
     def add_student(self):
-        name = self.stundent_name.text()
+        name = self.student_name.text()
         course = self.course_name.itemText(self.course_name.currentIndex())
         mobile = self.mobile.text()
         connection = sqlite3.connect("database.db")
@@ -202,19 +208,19 @@ class SearchDialog(QDialog):
 
         #Create Layout and input widget
         layout = QVBoxLayout()
-        self.stundent_name = QLineEdit()
-        self.stundent_name.setPlaceholderText("Name")
-        layout.addWidget(self.stundent_name)
+        self.student_name = QLineEdit()
+        self.student_name.setPlaceholderText("Name")
+        layout.addWidget(self.student_name)
 
         # Create button
         button = QPushButton("Search")
         button.clicked.connect(self.search)
         layout.addWidget(button)
 
-        self.layout(layout)
+        self.setLayout(layout)
 
     def search(self):
-        name = self.stundent_name.text()
+        name = self.student_name.text()
         connection = sqlite3.connect("database.db")
         cursor = connection.cursor()
         result = cursor.execute("SELECT * FROM students WHERE name = ?", (name,))
