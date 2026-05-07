@@ -1,5 +1,5 @@
 import sys
-
+import sqlite3
 from PyQt6.QtGui import QAction
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem
@@ -26,9 +26,18 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(self.table)
 
     def load_data(self):
-        self.table
+        connection = sqlite3.connect("database.db")
+        result = connection.execute("SELECT * FROM students")
+        self.table.setRowCount(0)
+        for row_number, row_data in enumerate(result):
+            self.table.insertRow(row_number)
+            for column_number, column_data in enumerate(row_data):
+                self.table.setItem(row_number, column_number, QTableWidgetItem(str(column_data)))
+        connection.close()
+
 
 app = QApplication(sys.argv)
 age_calculator = MainWindow()
 age_calculator.show()
+age_calculator.load_data()
 sys.exit(app.exec())
