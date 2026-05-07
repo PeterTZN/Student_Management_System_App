@@ -120,6 +120,23 @@ class SearchDialog(QDialog):
         button.clicked.connect(self.search)
         layout.addWidget(button)
 
+        self.layout(layout)
+
+    def search(self):
+        name = self.stundent_name.text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE name = ?", (name,))
+        rows = list(result)
+        print(rows)
+        items = main_window.table.findItems(name, Qt.MatchFlag.MatchFixedString)
+        for item in items:
+            print(item)
+            main_window.table.item(item.row(), 1).setSelected(True)
+
+        cursor.close()
+        connection.close()
+
 
 app = QApplication(sys.argv)
 main_window = MainWindow()
