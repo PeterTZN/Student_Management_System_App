@@ -1,11 +1,12 @@
 import sys
 import sqlite3
+from idlelib.help_about import AboutDialog
 
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QAction, QIcon
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QLabel, QWidget, QGridLayout, \
     QLineEdit, QPushButton, QMainWindow, QTableWidget, QTableWidgetItem, QDialog, \
-    QComboBox, QToolBar, QStatusBar
+    QComboBox, QToolBar, QStatusBar, QMessageBox
 
 
 class MainWindow(QMainWindow):
@@ -25,6 +26,7 @@ class MainWindow(QMainWindow):
         about_action = QAction("About", self)
         help_menu_item.addAction(about_action)
         about_action.setMenuRole(QAction.MenuRole.NoRole)
+        about_action.triggered.connect(self.about)
 
         search_action = QAction(QIcon("icons/search.png"), "Search", self)
         edit_menu_item.addAction(search_action)
@@ -91,6 +93,30 @@ class MainWindow(QMainWindow):
         dialog = DeleteDialog()
         dialog.exec()
 
+    def about(self):
+        dialog = AboutDialog()
+        dialog.exec()
+
+
+class AddDialog(QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("About")
+        content = """
+        Student Management System v1.0 The Student Management System is a 
+        desktop application built with Python and PyQt6, 
+        designed to make managing student records simple and efficient. 
+        It allows users to easily add, edit, delete and search for student records, 
+        storing all data securely in a local SQLite database. 
+        With a clean and intuitive interface featuring a toolbar, 
+        menu bar and dynamic status bar, the application provides a seamless 
+        experience for keeping student information organised. 
+        Each student record stores a name, course and mobile number, 
+        making it a practical tool for small institutions, 
+        tutors or educators who need a straightforward solution for student data management.
+        Built with Python 3 | PyQt6 | SQLite
+        """
+
 
 class EditDialog(QDialog):
     def __init__(self):
@@ -149,7 +175,41 @@ class EditDialog(QDialog):
 
 
 class DeleteDialog(QDialog):
-    pass
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Delete Student Data")
+
+        layout = QGridLayout()
+        confirmation = QLabel("Are you sure you want to delete this record?")
+        yes = QPushButton("Yes")
+        no = QPushButton("No")
+
+        layout.addWidget(confirmation, 0, 0, 1, 2)
+        layout.addWidget(yes, 1, 0)
+        layout.addWidget(no, 1, 1)
+        self.setLayout(layout)
+
+        yes.clicked.connect(self.delete_student)
+
+    def delete_student(self):
+        # Get selected row and student ID
+        index = main_window.table.currentRow()
+        student_id = main_window.table.item(index, 0).text()
+
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("DELETE from students WHERE id = ?", (student_id, ))
+        connection.commit()
+        cursor.close()
+        connection.close()
+        main_window.load_data()
+
+        self.close()
+
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle("Success")
+        confirmation_widget.setText("The record has been deleted successfully!")
+        confirmation_widget.exec()
 
 
 class InsertDialog(QDialog):
