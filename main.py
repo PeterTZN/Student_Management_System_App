@@ -98,7 +98,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
 
-class AddDialog(QMessageBox):
+class AboutDialog(QMessageBox):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("About")
@@ -116,7 +116,7 @@ class AddDialog(QMessageBox):
         tutors or educators who need a straightforward solution for student data management.
         Built with Python 3 | PyQt6 | SQLite
         """
-
+        self.setText(content)
 
 class EditDialog(QDialog):
     def __init__(self):
