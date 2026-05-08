@@ -98,7 +98,7 @@ student-management-system/
 
 ## Author
 
-Built by [Your Name]
+Built by Peter Thomson
 
 ---
 
